@@ -3,7 +3,7 @@
    <uses-permission android:name="android.permission.SEND_SMS"/>
     <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
     <application
-        android:label="OTP sms sender app"
+        android:label="OTP app"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
