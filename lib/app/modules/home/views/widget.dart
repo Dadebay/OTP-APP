@@ -49,17 +49,26 @@ ListView getData(List list) {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              "Phone: +${list[list.length - index - 1]['phone']}",
-              style: const TextStyle(color: Colors.white, fontFamily: gilroySemiBold, fontSize: 18),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "Phone: +${list[list.length - index - 1]['phone']}",
+                  style: const TextStyle(color: Colors.white, fontFamily: gilroySemiBold, fontSize: 16),
+                ),
+                Text(
+                  "ID: ${list[list.length - index - 1]['id']}",
+                  style: const TextStyle(color: Colors.white, fontFamily: gilroyRegular, fontSize: 14),
+                ),
+              ],
             ),
             Text(
               "OTP: ${list[list.length - index - 1]['message']}",
-              style: const TextStyle(color: Colors.white, fontFamily: gilroyMedium, fontSize: 16),
+              style: const TextStyle(color: Colors.white, fontFamily: gilroyMedium, fontSize: 14),
             ),
             Text(
               "Date: ${list[list.length - index - 1]['date']}",
-              style: const TextStyle(color: Colors.grey, fontFamily: gilroyRegular, fontSize: 16),
+              style: const TextStyle(color: Colors.grey, fontFamily: gilroyRegular, fontSize: 14),
             ),
           ],
         ),
@@ -72,4 +81,12 @@ ListView getData(List list) {
       );
     },
   );
+}
+
+Center errorWidget() {
+  return const Center(
+      child: Text(
+    "Go to settings and fill the URL and EVENT ana HeartBeat",
+    style: TextStyle(color: Colors.white, fontFamily: gilroySemiBold, fontSize: 20),
+  ));
 }

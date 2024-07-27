@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:get/get_navigation/src/snackbar/snackbar_controller.dart';
 
 const Color kPrimaryColor = Color(0xff6366f1);
 const Color kBlackColor = Color(0xff2b2b2b);

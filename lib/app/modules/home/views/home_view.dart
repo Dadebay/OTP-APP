@@ -5,10 +5,11 @@ import 'package:background_sms/background_sms.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iconly/iconly.dart';
-import 'package:lottie/lottie.dart';
 import 'package:otp_sms_sender_mine/app/constants/constants.dart';
 import 'package:otp_sms_sender_mine/app/modules/home/controllers/home_controller.dart';
 import 'package:otp_sms_sender_mine/app/modules/home/views/widget.dart';
+import 'package:otp_sms_sender_mine/app/modules/logs/controllers/logs_controller.dart';
+import 'package:otp_sms_sender_mine/app/modules/logs/views/logs_view.dart';
 import 'package:otp_sms_sender_mine/app/modules/settings/views/settings_view.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:web_socket_channel/io.dart';
@@ -22,56 +23,70 @@ class HomeView extends StatefulWidget {
 }
 
 class _HomeViewState extends State<HomeView> {
-  String url = '';
+  String? errorTitle;
   String event = '';
   String heartBeat = '';
+  final HomeController homeController = Get.put(HomeController());
+  final LogsController logsController = Get.put(LogsController());
+  String url = '';
+
+  late WebSocketChannel _channel;
+
   @override
   void initState() {
     super.initState();
+    _getPermission();
 
-    doFUnction();
+    changeSettings();
   }
 
-  doFUnction() {
+  changeSettings() {
     homeController.readURLandEVENT();
-    print(homeController.event);
-    print(homeController.url);
-    print(homeController.eventHeartBeat);
     if (url == '') {
       url = homeController.url.value;
       event = homeController.event.value;
       heartBeat = homeController.eventHeartBeat.value;
-      print("-------------------------");
-      print(url);
-      print(event);
-      print(heartBeat);
       _connectToWebSocket();
     } else {
       showSnackBar("Error", "Go to settings fill the URL and EVENT ana HeartBeat", Colors.red);
     }
   }
 
-  final HomeController homeController = Get.put(HomeController());
+  sendSMS(String phoneNumber, String sms) async {
+    SmsStatus result = await BackgroundSms.sendMessage(phoneNumber: phoneNumber, message: sms);
+    if (result == SmsStatus.sent) {
+      showSnackBar("Sms", "Sms send this number $phoneNumber", Colors.green);
+    } else {
+      showSnackBar("Error", "Cannot send sms this number $phoneNumber", Colors.red);
+    }
+  }
+
+  void sendHeartbeat() {
+    _channel.sink.add(heartBeat);
+    homeController.valuesTITLE.value = 1;
+    setState(() {});
+  }
 
   _getPermission() async => await [Permission.sms].request();
 
   Future<bool> _isPermissionGranted() async => await Permission.sms.status.isGranted;
 
-  late WebSocketChannel _channel;
-  String? errorTitle;
   void _connectToWebSocket() {
-    _channel = IOWebSocketChannel.connect(Uri.parse(url));
+    _channel = IOWebSocketChannel.connect(Uri.parse(url.toString()));
     _channel.sink.add(event);
     _channel.stream.listen(
       (event) async {
         Map<String, dynamic> data = jsonDecode(event);
+
         if (data['event'] != 'pusher:pong') {
           homeController.changeValue(data);
+          logsController.addLOG(data: data['event'], date: DateTime.now().toString().substring(0, 16));
         }
         if (data['event'] == 'send') {
           Map<String, dynamic> phoneNumber = jsonDecode(data['data']);
-          homeController.addData(phone: phoneNumber['phone'], message: phoneNumber['msg']);
+          homeController.addData(phone: phoneNumber['phone'], message: phoneNumber['msg'], id: phoneNumber['id'].toString());
           if (await _isPermissionGranted()) {
+            homeController.sendData(id: phoneNumber['id']);
             sendSMS(phoneNumber['phone'], phoneNumber['msg']);
             showSnackBar("Done", "Smssend this number :${phoneNumber['phone']}", Colors.green);
           } else {
@@ -87,25 +102,9 @@ class _HomeViewState extends State<HomeView> {
         _reconnect();
       },
     );
-    Timer.periodic(const Duration(seconds: 30), (timer) {
+    Timer.periodic(const Duration(seconds: 25), (timer) {
       sendHeartbeat();
     });
-  }
-
-  sendSMS(String phoneNumber, String sms) async {
-    SmsStatus result = await BackgroundSms.sendMessage(phoneNumber: phoneNumber, message: sms);
-    if (result == SmsStatus.sent) {
-      showSnackBar("Sms", "Sms send this number $phoneNumber", Colors.green);
-    } else {
-      showSnackBar("Error", "Cannot send sms this number $phoneNumber", Colors.red);
-    }
-  }
-
-  void sendHeartbeat() {
-    showSnackBar("Sending", "Heartbeat for websocket connection every 30 seconds", Colors.purple);
-    _channel.sink.add(heartBeat);
-    homeController.valuesTITLE.value = 1;
-    setState(() {});
   }
 
   void _reconnect() {
@@ -113,35 +112,6 @@ class _HomeViewState extends State<HomeView> {
       _connectToWebSocket();
     });
     setState(() {});
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-        backgroundColor: Colors.black,
-        appBar: appBar(),
-        body: url == ""
-            ? const Center(
-                child: Text(
-                "Go to settings and fill the URL and EVENT ana HeartBeat",
-                style: TextStyle(color: Colors.white, fontFamily: gilroySemiBold, fontSize: 20),
-              ))
-            : Obx(() {
-                if (homeController.valuesTITLE.value == 0) {
-                  return waitingForMessages();
-                } else if (homeController.valuesTITLE.value == 2 || homeController.valuesTITLE.value == 3) {
-                  return error(homeController.valuesTITLE.value == 3 ? true : false, () {
-                    homeController.valuesTITLE.value = 0;
-                    _reconnect();
-                  });
-                } else if (homeController.valuesTITLE.value == 1) {
-                  return homeController.data.isEmpty ? emptyMessages() : getData(homeController.data);
-                }
-                return const Text(
-                  "No data please restart app",
-                  style: TextStyle(color: Colors.white, fontFamily: gilroySemiBold, fontSize: 20),
-                );
-              }));
   }
 
   PreferredSize appBar() {
@@ -163,15 +133,54 @@ class _HomeViewState extends State<HomeView> {
                   IconlyLight.setting,
                   color: Colors.white,
                 )),
-            Container(
-              width: 20,
-              height: 20,
-              margin: const EdgeInsets.only(right: 20),
-              decoration: BoxDecoration(color: homeController.values[homeController.valuesTITLE.value]['color'], shape: BoxShape.circle),
+            IconButton(
+                onPressed: () {
+                  Get.to(() => LogsView());
+                },
+                icon: const Icon(
+                  IconlyLight.document,
+                  color: Colors.white,
+                )),
+            GestureDetector(
+              onTap: () {
+                Map<String, dynamic> data = jsonDecode(event);
+                print(data['data']['channel']);
+              },
+              child: Container(
+                width: 20,
+                height: 20,
+                margin: const EdgeInsets.only(right: 20, left: 10),
+                decoration: BoxDecoration(color: homeController.values[homeController.valuesTITLE.value]['color'], shape: BoxShape.circle),
+              ),
             ),
           ],
         );
       }),
     );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        backgroundColor: Colors.black,
+        appBar: appBar(),
+        body: url == ""
+            ? errorWidget()
+            : Obx(() {
+                if (homeController.valuesTITLE.value == 0) {
+                  return waitingForMessages();
+                } else if (homeController.valuesTITLE.value == 2 || homeController.valuesTITLE.value == 3) {
+                  return error(homeController.valuesTITLE.value == 3 ? true : false, () {
+                    homeController.valuesTITLE.value = 0;
+                    _reconnect();
+                  });
+                } else if (homeController.valuesTITLE.value == 1) {
+                  return homeController.data.isEmpty ? emptyMessages() : getData(homeController.data);
+                }
+                return const Text(
+                  "No data please restart app",
+                  style: TextStyle(color: Colors.white, fontFamily: gilroySemiBold, fontSize: 20),
+                );
+              }));
   }
 }

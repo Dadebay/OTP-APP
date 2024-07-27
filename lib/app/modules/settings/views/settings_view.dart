@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
-
 import 'package:get/get.dart';
 import 'package:iconly/iconly.dart';
 import 'package:otp_sms_sender_mine/app/constants/constants.dart';
 import 'package:otp_sms_sender_mine/app/modules/home/controllers/home_controller.dart';
 import 'package:otp_sms_sender_mine/app/modules/settings/views/agree_button_view.dart';
 import 'package:otp_sms_sender_mine/app/modules/settings/views/custom_text_field.dart';
-
-import '../controllers/settings_controller.dart';
 
 class SettingsView extends StatefulWidget {
   const SettingsView({super.key});
@@ -52,41 +49,42 @@ class _SettingsViewState extends State<SettingsView> {
           ),
           elevation: 1,
         ),
-        body: Column(
+        body: ListView(
           children: [
-            Expanded(
-              child: Obx(() {
-                textEditingController.text = homeController.event.value;
-                urlEditingController.text = homeController.url.value;
-                heartBeatEditingController.text = homeController.eventHeartBeat.value;
-                return Column(
-                  children: [
-                    CustomTextField(
-                      labelName: 'SMS channel',
-                      controller: textEditingController,
-                    ),
-                    CustomTextField(
-                      labelName: 'Websocket URL',
-                      controller: urlEditingController,
-                    ),
-                    CustomTextField(
-                      labelName: 'HeartBeat URL',
-                      controller: heartBeatEditingController,
-                    ),
-                    const SizedBox(
-                      height: 20,
-                    ),
-                    AgreeButton(
-                        onTap: () {
-                          homeController.writeURLandEVENT(urll: urlEditingController.text, eventt: textEditingController.text, eventHeartBeatt: heartBeatEditingController.text);
-                        },
-                        text: "Agree")
-                  ],
-                );
-              }),
-            ),
+            Obx(() {
+              textEditingController.text = homeController.event.value;
+              urlEditingController.text = homeController.url.value;
+              heartBeatEditingController.text = homeController.eventHeartBeat.value;
+              return Column(
+                children: [
+                  CustomTextField(
+                    labelName: 'SMS channel',
+                    controller: textEditingController,
+                  ),
+                  CustomTextField(
+                    labelName: 'Websocket URL',
+                    controller: urlEditingController,
+                  ),
+                  CustomTextField(
+                    labelName: 'HeartBeat URL',
+                    controller: heartBeatEditingController,
+                  ),
+                  const SizedBox(
+                    height: 20,
+                  ),
+                  AgreeButton(
+                      onTap: () {
+                        Get.back();
+
+                        homeController.writeURLandEVENT(urll: urlEditingController.text, eventt: textEditingController.text, eventHeartBeatt: heartBeatEditingController.text);
+                      },
+                      text: "Agree")
+                ],
+              );
+            }),
             const Text(
               'Created by: G.Dadebay',
+              textAlign: TextAlign.center,
               style: TextStyle(color: Colors.white, fontFamily: gilroySemiBold, fontSize: 20),
             )
           ],

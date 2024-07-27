@@ -1,8 +1,8 @@
 // ignore_for_file: file_names, always_use_package_imports
 
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
@@ -10,6 +10,7 @@ import 'package:lottie/lottie.dart';
 import 'package:otp_sms_sender_mine/app/constants/constants.dart';
 import 'package:otp_sms_sender_mine/app/modules/home/controllers/home_controller.dart';
 import 'package:otp_sms_sender_mine/app/modules/home/views/home_view.dart';
+import 'package:otp_sms_sender_mine/app/modules/logs/controllers/logs_controller.dart';
 
 class ConnectionCheckView extends StatefulWidget {
   const ConnectionCheckView({super.key});
@@ -19,22 +20,17 @@ class ConnectionCheckView extends StatefulWidget {
 }
 
 class _ConnectionCheckViewState extends State {
+  final LogsController logsController = Get.put(LogsController());
+
   @override
   void initState() {
     super.initState();
     checkConnection();
-    findAllNumbersAndRetviewThem();
+    homeController.findAllNumbersAndRetviewThem();
+    logsController.getAllLogsBack();
   }
 
   final HomeController homeController = Get.put(HomeController());
-  findAllNumbersAndRetviewThem() {
-    var data = storage.read('data') ?? '[]';
-    List<dynamic> list = jsonDecode(data);
-    print(list);
-    for (var element in list) {
-      homeController.addData(phone: element['phone'], message: element['message']);
-    }
-  }
 
   GetStorage storage = GetStorage();
   void checkConnection() async {
