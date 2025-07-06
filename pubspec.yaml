@@ -14,9 +14,10 @@ dependencies:
   restart_app: ^1.2.1
   iconly: any
   lottie:
-  background_sms: ^0.0.4
+  # background_sms: ^0.0.3
   get: 4.6.6
   device_info_plus: ^10.1.0
+  another_telephony: ^0.4.1
   flutter:
     sdk: flutter
 

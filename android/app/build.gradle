@@ -24,9 +24,7 @@ if (flutterVersionName == null) {
 
 android {
     namespace "com.example.otp_sms_sender_mine"
-    compileSdk flutter.compileSdkVersion
-    ndkVersion flutter.ndkVersion
-
+    compileSdkVersion 35
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
@@ -39,6 +37,10 @@ android {
     sourceSets {
         main.java.srcDirs += 'src/main/kotlin'
     }
+    lintOptions {
+        disable 'InvalidPackage'
+        checkReleaseBuilds false //<- add this line
+    }
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
@@ -46,7 +48,7 @@ android {
         // You can update the following values to match your application needs.
         // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-gradle-build-configuration.
         minSdkVersion 23
-        targetSdkVersion flutter.targetSdkVersion
+        targetSdkVersion 35
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
     }
@@ -64,4 +66,8 @@ flutter {
     source '../..'
 }
 
-dependencies {}
+dependencies {
+    implementation 'androidx.core:core-ktx:1.12.0' // EN AZ 1.10.1 önerilir
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+
+}

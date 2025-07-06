@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:background_sms/background_sms.dart';
+import 'package:another_telephony/telephony.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iconly/iconly.dart';
@@ -52,13 +52,24 @@ class _HomeViewState extends State<HomeView> {
     }
   }
 
-  sendSMS(String phoneNumber, String sms) async {
-    SmsStatus result = await BackgroundSms.sendMessage(phoneNumber: phoneNumber, message: sms);
-    if (result == SmsStatus.sent) {
-      showSnackBar("Sms", "Sms send this number $phoneNumber", Colors.green);
-    } else {
-      showSnackBar("Error", "Cannot send sms this number $phoneNumber", Colors.red);
+  final Telephony telephony = Telephony.instance;
+  sendSMS(String phoneNumber, String rawMsg) async {
+    final String otpCode = _extractOTP(rawMsg); // örn: 72150
+    final String finalMessage = "<#> Ýaka OTP koduňuz : $otpCode\nyaka2.com tNXDnsSlL1U";
+    print(finalMessage);
+    listener(SendStatus status) {
+      if (status == SendStatus.SENT) {
+        showSnackBar("Sms", "Sms sent to this number $phoneNumber", Colors.green);
+      }
     }
+
+    await telephony.sendSms(to: phoneNumber, message: finalMessage, statusListener: listener);
+  }
+
+  String _extractOTP(String message) {
+    final regex = RegExp(r'\d{5,6}'); // OTP genelde 5-6 haneli olur
+    final match = regex.firstMatch(message);
+    return match?.group(0) ?? "00000";
   }
 
   void sendHeartbeat() {
@@ -67,7 +78,10 @@ class _HomeViewState extends State<HomeView> {
     setState(() {});
   }
 
-  _getPermission() async => await [Permission.sms].request();
+  _getPermission() async {
+    await [Permission.sms].request();
+    bool? permissionsGranted = await telephony.requestPhoneAndSmsPermissions;
+  }
 
   Future<bool> _isPermissionGranted() async => await Permission.sms.status.isGranted;
 
@@ -84,6 +98,10 @@ class _HomeViewState extends State<HomeView> {
         }
         if (data['event'] == 'send') {
           Map<String, dynamic> phoneNumber = jsonDecode(data['data']);
+          print("-=----=----=----=----=----=----=----=----=----=----=----=----=----=----=----=----=----=----=----=----");
+          print(phoneNumber['msg']);
+          print(phoneNumber);
+          print(phoneNumber['msg']);
           homeController.addData(phone: phoneNumber['phone'], message: phoneNumber['msg'], id: phoneNumber['id'].toString());
           if (await _isPermissionGranted()) {
             homeController.sendData(id: phoneNumber['id']);
